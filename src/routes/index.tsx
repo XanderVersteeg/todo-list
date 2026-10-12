@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { TodoComposer } from "@/components/todo-composer";
@@ -14,6 +15,7 @@ function Home() {
 	const queryClient = useQueryClient();
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
+	const [showCompleted, setShowCompleted] = useState(false);
 
 	const todosQuery = useQuery({
 		queryKey: todosKey,
@@ -34,6 +36,31 @@ function Home() {
 		mutationFn: (id: number) => completeTodo({ data: { id } }),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: todosKey }),
 	});
+
+	const todos = todosQuery.data ?? [];
+	const activeTodos = todos.filter((todo) => !todo.isCompleted);
+	const completedTodos = todos.filter((todo) => todo.isCompleted);
+
+	const renderTodo = (todo: (typeof todos)[number]) => (
+		<li key={todo.id}>
+			<button
+				type="button"
+				onClick={() => completeMutation.mutate(todo.id)}
+				disabled={todo.isCompleted || completeMutation.isPending}
+				className="group w-full cursor-pointer py-4 text-left text-lg font-medium outline-none disabled:cursor-default"
+			>
+				<span
+					className={`relative inline-block transition-colors after:absolute after:top-1/2 after:left-0 after:h-0.5 after:w-full after:origin-left after:bg-current after:transition-transform after:duration-200 ${
+						todo.isCompleted
+							? "text-muted-foreground after:scale-x-100"
+							: "after:scale-x-0 group-hover:after:scale-x-100 group-focus-visible:after:scale-x-100"
+					}`}
+				>
+					{todo.title}
+				</span>
+			</button>
+		</li>
+	);
 
 	return (
 		<div className="mx-auto max-w-md p-8">
@@ -70,44 +97,32 @@ function Home() {
 			{todosQuery.data?.length === 0 && (
 				<p className="mt-4 text-muted-foreground">No todos yet.</p>
 			)}
-			<ul className="mt-4 flex flex-col gap-3">
-				{todosQuery.data?.map((todo) => (
-					<li
-						key={todo.id}
-						className="flex items-start justify-between gap-3 rounded border p-3"
-					>
-						<div className={todo.isCompleted ? "text-muted-foreground" : ""}>
-							<p
-								className={`font-medium ${todo.isCompleted ? "line-through" : ""}`}
-							>
-								{todo.title}
-							</p>
-							{todo.description && (
-								<p className="mt-1 whitespace-pre-wrap text-sm">
-									{todo.description}
-								</p>
-							)}
-						</div>
-						{todo.isCompleted ? (
-							<span className="text-sm text-green-400">Done</span>
-						) : (
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={() => completeMutation.mutate(todo.id)}
-								disabled={
-									completeMutation.isPending &&
-									completeMutation.variables === todo.id
-								}
-								className="shrink-0"
-							>
-								Complete
-							</Button>
-						)}
-					</li>
-				))}
+			<ul className="mt-4 divide-y divide-border">
+				{activeTodos.map(renderTodo)}
 			</ul>
+			{completedTodos.length > 0 && (
+				<>
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						aria-expanded={showCompleted}
+						onClick={() => setShowCompleted((open) => !open)}
+						className="mt-3 text-muted-foreground"
+					>
+						<ChevronDown
+							className={`transition-transform ${showCompleted ? "rotate-180" : ""}`}
+						/>
+						{showCompleted ? "Hide" : "Show"} completed (
+						{completedTodos.length})
+					</Button>
+					{showCompleted && (
+						<ul className="mt-2 divide-y divide-border">
+							{completedTodos.map(renderTodo)}
+						</ul>
+					)}
+				</>
+			)}
 		</div>
 	);
 }
