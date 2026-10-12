@@ -19,6 +19,11 @@
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio"
   },
+  "overrides": {
+    "vite-plugin-neon-new": {
+      "vite": "$vite"
+    }
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@t3-oss/env-core": "^0.13.10",
@@ -37,6 +42,7 @@
     "lucide-react": "^0.577.0",
     "nitro": "3.0.260610-beta",
     "pg": "^8.16.3",
+    "radix-ui": "^1.8.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.0.2",
